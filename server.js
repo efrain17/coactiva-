@@ -64,6 +64,38 @@ app.get('/api/deudores', (req, res) => {
       res.json(data) })
 })
 
+app.get('/api/deudoresFiltrados', (req, res) => {
+    bdserver.todosDeudores(request, (err, dataServer) => {
+      if(err) return res.json(err)
+      bdpostgres.todosOrdenes(pool, (err,dataPostgres) =>{
+        if(err) return res.json(err)
+
+        var datafilter = dataServer.filter(dataMap => {
+          let dataReturn = dataPostgres.filter(data=>data.codigo_catastral===dataMap.CodigoCatastral)[0]
+          if (dataReturn) return dataMap;
+        })
+      res.json(datafilter)
+
+      })
+    })
+})
+
+app.get('/api/deudoresOrdenPago', (req, res) => {
+    bdserver.todosDeudores(request, (err, dataServer) => {
+      if(err) return res.json(err)
+      bdpostgres.todosOrdenes(pool, (err,dataPostgres) =>{
+        if(err) return res.json(err)
+
+        var datafilter = dataServer.filter(dataMap => {
+          let dataReturn = dataPostgres.filter(data=>data.codigo_catastral!==dataMap.CodigoCatastral)[0]
+          if (dataReturn) return dataMap;
+        })
+      res.json(datafilter)
+
+      })
+    })
+})
+
 app.get('/api/deudas/:id', (req, res) => {
     let id = req.params.id
     bdserver.deudasTitular(id, request, (err, data) => {
