@@ -31,16 +31,17 @@ var connectionPostgres = {
 
 var pool = new pg.Pool(connectionPostgres)
 
-pool.on('error', function (err, client) {
+pool.on('error', (err, client) => {
   console.error('idle client error', err.message, err.stack)
 })
 
 var request = new sql.Request(connectionSql);
 
-connectionSql.connect(function(err) {
+connectionSql.connect( (err) => {
   	if(err) return err, console.log(err)
   	console.log("conectado")	
 })
+console.log("primer comentario")
 
 app.use('/', express.static(__dirname + '/dist'));
 //enrutador de angular  
@@ -69,9 +70,9 @@ app.get('/api/deudoresFiltrados', (req, res) => {
       if(err) return res.json(err)
       bdpostgres.todosOrdenesId(pool, (err,dataPostgres) =>{
         if(err) return res.json(err)
-        if(!dataPostgres){ // si ibtiene algo de la segunda consulta
+        if(dataPostgres.length > 0){ // si ibtiene algo de la segunda consulta
           var datafilter = dataServer.filter(dataMap => {
-          let dataReturn = dataPostgres.filter(data=>data.codigocatastral!==dataMap.codigocatastral)[0]
+          let dataReturn = dataPostgres.filter(data=>data.codigocatastral!=dataMap.codigocatastral || data.anomax!=dataMap.anomax)[0]
           if (dataReturn) return dataMap;})
           res.json(datafilter)
         }
@@ -80,13 +81,13 @@ app.get('/api/deudoresFiltrados', (req, res) => {
     })
 })
 
-app.get('/api/deudoresOrdenPago', (req, res) => {
+app.get('/api/deudoresOrdenPago', (req, res) => {// corregir 
     bdserver.todosDeudores(request, (err, dataServer) => {
       if(err) return res.json(err)
       bdpostgres.todosOrdenesId(pool, (err,dataPostgres) => {
         if(err) return res.json(err)
         var datafilter = dataServer.filter(dataMap => {
-          let dataReturn = dataPostgres.filter(data=>data.codigoCatastral===dataMap.codigoCatastral)[0]
+          let dataReturn = dataPostgres.filter(data=>data.codigoCatastral==dataMap.codigoCatastral)[0]
           if (dataReturn) return dataMap;
         })
       res.json(datafilter)

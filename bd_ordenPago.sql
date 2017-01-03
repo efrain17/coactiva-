@@ -1,6 +1,6 @@
 /*==============================================================*/
 /* DBMS name:      PostgreSQL 8                                 */
-/* Created on:     03/01/2017 10:55:09                          */
+/* Created on:     03/01/2017 12:30:13                          */
 /*==============================================================*/
 
 
@@ -44,6 +44,7 @@ create table ORDEN_COBRO (
    VALOR                TEXT                 null,
    ANO                  TEXT                 not null,
    DIRECCION            TEXT                 null,
+   ANOMAX               TEXT                 null,
    constraint PK_ORDEN_COBRO primary key (CODIGOCATASTRAL, ANO)
 );
 
