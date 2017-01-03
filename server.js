@@ -67,15 +67,15 @@ app.get('/api/deudores', (req, res) => {
 app.get('/api/deudoresFiltrados', (req, res) => {
     bdserver.todosDeudores(request, (err, dataServer) => {
       if(err) return res.json(err)
-      bdpostgres.todosOrdenes(pool, (err,dataPostgres) =>{
+      bdpostgres.todosOrdenesId(pool, (err,dataPostgres) =>{
         if(err) return res.json(err)
-
-        var datafilter = dataServer.filter(dataMap => {
-          let dataReturn = dataPostgres.filter(data=>data.codigo_catastral===dataMap.CodigoCatastral)[0]
-          if (dataReturn) return dataMap;
-        })
-      res.json(datafilter)
-
+        if(!dataPostgres){ // si ibtiene algo de la segunda consulta
+          var datafilter = dataServer.filter(dataMap => {
+          let dataReturn = dataPostgres.filter(data=>data.codigocatastral!==dataMap.codigocatastral)[0]
+          if (dataReturn) return dataMap;})
+          res.json(datafilter)
+        }
+        else res.json(dataServer)
       })
     })
 })
@@ -83,16 +83,21 @@ app.get('/api/deudoresFiltrados', (req, res) => {
 app.get('/api/deudoresOrdenPago', (req, res) => {
     bdserver.todosDeudores(request, (err, dataServer) => {
       if(err) return res.json(err)
-      bdpostgres.todosOrdenes(pool, (err,dataPostgres) =>{
+      bdpostgres.todosOrdenesId(pool, (err,dataPostgres) => {
         if(err) return res.json(err)
-
         var datafilter = dataServer.filter(dataMap => {
-          let dataReturn = dataPostgres.filter(data=>data.codigo_catastral!==dataMap.CodigoCatastral)[0]
+          let dataReturn = dataPostgres.filter(data=>data.codigoCatastral===dataMap.codigoCatastral)[0]
           if (dataReturn) return dataMap;
         })
       res.json(datafilter)
-
       })
+    })
+})
+
+app.get('/api/deudoresOrdenPagodb', (req,res) => {
+    bdpostgres.todosOrdenes(pool, (err, data) => {
+      if(err) return res.json(err)
+        res.json(data)
     })
 })
 
@@ -109,6 +114,7 @@ app.get('/api/ordenarPago/:id', (req, res) =>{
       if(err) return res.json(err)
       bdpostgres.ingresarOrden(data, pool, (err,data)=>{
         if(err) return res.json(err)
+          console.log("inserto orden")
           res.json(data) })
     }) 
 })
