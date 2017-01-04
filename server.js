@@ -73,25 +73,13 @@ app.get('/api/deudoresFiltrados', (req, res) => {
         if(err) return res.json(err)
         if(dataPostgres.length > 0){ // si ibtiene algo de la segunda consulta
           var datafilter = dataServer.filter(dataMap => {
-          let dataReturn = dataPostgres.filter(data=>data.codigocatastral!=dataMap.codigocatastral || data.anomax!=dataMap.anomax)[0]
-          if (dataReturn) return dataMap;})
+            let dataReturn = dataPostgres.find(data =>  data.codigocatastral ==dataMap.codigocatastral && data.anomax==dataMap.anomax)
+            if (!dataReturn) return dataMap
+          })
+          console.log(datafilter.length)
           res.json(datafilter)
         }
         else res.json(dataServer)
-      })
-    })
-})
-
-app.get('/api/deudoresOrdenPago', (req, res) => {// corregir 
-    bdserver.todosDeudores(request, (err, dataServer) => {
-      if(err) return res.json(err)
-      bdpostgres.todosOrdenesId(pool, (err,dataPostgres) => {
-        if(err) return res.json(err)
-        var datafilter = dataServer.filter(dataMap => {
-          let dataReturn = dataPostgres.filter(data=>data.codigoCatastral==dataMap.codigoCatastral)[0]
-          if (dataReturn) return dataMap;
-        })
-      res.json(datafilter)
       })
     })
 })
