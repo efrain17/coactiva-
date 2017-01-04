@@ -6,6 +6,7 @@ const sql = require('mssql');
 const pg = require('pg')
 const bdpostgres = require('./lib/bdPostgres')
 const bdserver = require('./lib/bdsqlServer')
+const requestReport = require('request')
 
 ////////////////////////////////////////
 const app = express()
@@ -118,6 +119,23 @@ app.get('/api/ordenarPago/:id', (req, res) =>{
           console.log("inserto orden")
           res.json(data) })
     }) 
+})
+
+
+app.get("/api/reporte", (req, res, next) => {
+  var data={
+    template: { "shortid": "B1-Y1A5YSx"},
+    data: {"books": [
+    {"name": "The Hobbit", "author": "J. R. R. Tolkien", "sales": 99}
+  ]},
+    option: { preview: true}
+  }
+  var options={
+    uri:"http://localhost:5488/api/report",
+    method:'POST',
+    json:data
+  }
+  requestReport(options).pipe(res)
 })
 
 
