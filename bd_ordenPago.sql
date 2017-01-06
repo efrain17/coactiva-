@@ -1,12 +1,12 @@
 /*==============================================================*/
 /* DBMS name:      PostgreSQL 8                                 */
-/* Created on:     03/01/2017 12:30:13                          */
+/* Created on:     5/1/2017 13:35:14                            */
 /*==============================================================*/
 
 
 drop table AUTO_PAGO;
 
-drop table ORDENES_COBROS;
+drop table DETALLE_ORDENES_COBROS;
 
 drop table ORDEN_COBRO;
 
@@ -17,20 +17,21 @@ create table AUTO_PAGO (
    ID_AUTO_PAGO         SERIAL not null,
    CODIGOCATASTRAL      TEXT                 null,
    ANO                  TEXT                 null,
+   ANOMAX               TEXT                 null,
    FECHA_INGRESO        TEXT                 null,
    constraint PK_AUTO_PAGO primary key (ID_AUTO_PAGO)
 );
 
 /*==============================================================*/
-/* Table: ORDENES_COBROS                                        */
+/* Table: DETALLE_ORDENES_COBROS                                */
 /*==============================================================*/
-create table ORDENES_COBROS (
+create table DETALLE_ORDENES_COBROS (
    ID_ORDENES           SERIAL not null,
    CODIGOCATASTRAL      TEXT                 null,
    ANO                  TEXT                 null,
+   ANOMAX               TEXT                 null,
    FECHAINGRESO         TEXT                 null,
-   ANOMIN               TEXT                 null,
-   constraint PK_ORDENES_COBROS primary key (ID_ORDENES)
+   constraint PK_DETALLE_ORDENES_COBROS primary key (ID_ORDENES)
 );
 
 /*==============================================================*/
@@ -44,17 +45,17 @@ create table ORDEN_COBRO (
    VALOR                TEXT                 null,
    ANO                  TEXT                 not null,
    DIRECCION            TEXT                 null,
-   ANOMAX               TEXT                 null,
-   constraint PK_ORDEN_COBRO primary key (CODIGOCATASTRAL, ANO)
+   ANOMAX               TEXT                 not null,
+   constraint PK_ORDEN_COBRO primary key (CODIGOCATASTRAL, ANO, ANOMAX)
 );
 
 alter table AUTO_PAGO
-   add constraint FK_AUTO_PAG_REFERENCE_ORDEN_CO foreign key (CODIGOCATASTRAL, ANO)
-      references ORDEN_COBRO (CODIGOCATASTRAL, ANO)
+   add constraint FK_AUTO_PAG_REFERENCE_ORDEN_CO foreign key (CODIGOCATASTRAL, ANO, ANOMAX)
+      references ORDEN_COBRO (CODIGOCATASTRAL, ANO, ANOMAX)
       on delete restrict on update restrict;
 
-alter table ORDENES_COBROS
-   add constraint FK_ORDENES__REFERENCE_ORDEN_CO foreign key (CODIGOCATASTRAL, ANO)
-      references ORDEN_COBRO (CODIGOCATASTRAL, ANO)
+alter table DETALLE_ORDENES_COBROS
+   add constraint FK_DETALLE__REFERENCE_ORDEN_CO foreign key (CODIGOCATASTRAL, ANO, ANOMAX)
+      references ORDEN_COBRO (CODIGOCATASTRAL, ANO, ANOMAX)
       on delete restrict on update restrict;
 
