@@ -40,17 +40,14 @@ var request = new sql.Request(connectionSql);
 
 connectionSql.connect( (err) => {
   	if(err) return err, console.log(err)
-  	console.log("conectado")	
+  	console.log("conectado Sql server")	
 })
-console.log("primer comentario")
 
 app.use('/', express.static(__dirname + '/dist'));
-//enrutador de angular  
-app.all('/ag/*',  (req, res) => {
+app.all('/ag/*',  (req, res) => { //enrutador de angular  
   res.status(200).sendFile(
     path.join(__dirname, '/dist/index.html')); 
 });
-
 
 //mis servicios 
 app.get('/api/deudores/:id', (req, res) => {
@@ -72,7 +69,7 @@ app.get('/api/deudoresFiltrados', (req, res) => {
       bdpostgres.todosOrdenesId(pool, (err,dataPostgres) =>{
         if(err) return res.json(err)
         if(dataPostgres.length > 0){ // si ibtiene algo de la segunda consulta
-          var datafilter = dataServer.filter(dataMap => {
+          let datafilter = dataServer.filter(dataMap => {
             let dataReturn = dataPostgres.find(data =>  data.codigocatastral ==dataMap.codigocatastral && data.anomax==dataMap.anomax)
             if (!dataReturn) return dataMap
           })
@@ -91,6 +88,20 @@ app.get('/api/deudoresOrdenPagodb', (req,res) => {
     })
 })
 
+app.get('/api/deudoresOrdenVencidos', (req,res) => {
+    bdpostgres.todosOrdenesVencidos(pool, (err, data) => {
+      if(err) return res.json(err)
+        res.json(data)
+    })
+})
+
+app.get('/api/deudoresAutoPagoHabil', (req,res) => {
+    bdpostgres.todosAutoPagoHabil(pool, (err, data) => {
+      if(err) return res.json(err)
+        res.json(data)
+    })
+})
+
 app.get('/api/deudas/:id', (req, res) => {
     let id = req.params.id
     bdserver.deudasTitular(id, request, (err, data) => {
@@ -100,31 +111,47 @@ app.get('/api/deudas/:id', (req, res) => {
 
 app.get('/api/ordenarPago/:id', (req, res) =>{
     let id = req.params.id
-    bdserver.ordenarPago(id, request, (err, data) => {
+    bdserver.ordenarPago(id, request, (err, dataSqlServer) => {
       if(err) return res.json(err)
-      bdpostgres.ingresarOrden(data, pool, (err,data)=>{
+      bdpostgres.ingresarOrden(dataSqlServer, pool, (err, data)=>{
         if(err) return res.json(err)
-          console.log("inserto orden")
-          res.json(data) })
+          bdpostgres.igresarOrdenDetalle(dataSqlServer, pool, (err, data)=>{
+            if(err) return res.json(err)
+            res.json(data)
+          })
+      })
     }) 
 })
 
+app.get('/api/repetirOrdenarPago/:id', (req, res) =>{
+    let id = req.params.id
+    bdserver.ordenarPago(id, request, (err, dataSqlServer) => {
+      if(err) return res.json(err)
+        bdpostgres.igresarOrdenDetalle(dataSqlServer, pool, (err, data)=>{
+          if(err) return res.json(err)
+          res.json(data)
+        })
+    }) 
+})
+//reporteGeneral?idcatastral=130950010110001000&shortid=Hynrwk5rg
+app.get('/api/reporteGeneral', (req, res) =>{
+    var myobject = {'Carteras':[],'Titulares': [] }
+    var data={ template: { "shortid": req.query.shortid }, data: {}, option: { preview: true } }
 
-app.get("/api/reporte", (req, res, next) => {
-  var data={
-    template: { "shortid": "B1-Y1A5YSx"},
-    data: {"books": [
-    {"name": "The Hobbit", "author": "J. R. R. Tolkien", "sales": 99}
-  ]},
-    option: { preview: true}
-  }
-  var options={
-    uri:"http://localhost:5488/api/report",
-    method:'POST',
-    json:data
-  }
-  requestReport(options).pipe(res)
+    bdserver.deudasTitular(req.query.idcatastral, request, (err, dataDeudas) => {
+        if(err) return res.json(err)
+        bdserver.datosTitular(req.query.idcatastral, request, (err, dataTitular) => {
+        if(err) return res.json(err)
+        myobject.Carteras = dataDeudas
+        myobject.Titulares.push(dataTitular[0])
+        data.data = myobject
+        console.log(data)
+        var options = { uri:"http://localhost:5488/api/report", method:'POST', json:data }
+        requestReport(options).pipe(res)
+      })     
+    })
 })
 
 
 server.listen(port, () => console.log(`Listening on port ${port}`))
+
