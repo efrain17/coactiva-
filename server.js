@@ -155,6 +155,11 @@ app.post('/api/reporteVarios', (req, res)=> {
     .catch(err => console.log(err.message))  
 })
 
+app.post('/api/ordenarPagoVarios', (req, res) =>{
+    let idcatastrales = req.body;
+             
+})
+
 app.post('/api/users', function(req, res) {
     var user_id = req.body.id;
     var token = req.body.token;
