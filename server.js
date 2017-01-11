@@ -56,23 +56,24 @@ app.use(bodyParser.urlencoded({ extended: true }));
 //mis servicios 
 app.get('/api/deudores/:id', (req, res) => {
   	let id = req.params.id
-    bdserver.deudoresPaginacion(id, request, (err, data) => {
-      if(err) return res.json(err)
-      res.json(data) }) 
+    bdserver.deudoresPaginacion(id, request)
+      .then(data=> res.json(data))
+      .catch(err=> res.json(err)) 
 })
 
 app.get('/api/deudores', (req, res) => {
-    bdserver.todosDeudores(request, (err, data) => {
-      if(err) return res.json(err)
-      res.json(data) })
+    bdserver.todosDeudores(request)
+      .then(data=> res.json(data))
+      .catch(err=> res.json(err)) 
 })
 
 app.get('/api/deudoresFiltrados', (req, res) => {
-    bdserver.todosDeudores(request, (err, dataServer) => {
-      if(err) return res.json(err)
-      bdpostgres.todosOrdenesId(pool, (err,dataPostgres) =>{
-        if(err) return res.json(err)
-        if(dataPostgres.length > 0){ // si ibtiene algo de la segunda consulta
+   let dataServer
+    bdserver.todosDeudores(request)
+      .then(dataServeConsult=> { dataServer=dataServeConsult
+        return bdpostgres.todosOrdenesId(pool) })
+      .then(dataPostgres=> {
+        if(dataPostgres.length > 0){ 
           let datafilter = dataServer.filter(dataMap => {
             let dataReturn = dataPostgres.find(data =>  data.codigocatastral ==dataMap.codigocatastral && data.anomax==dataMap.anomax)
             if (!dataReturn) return dataMap
@@ -80,78 +81,66 @@ app.get('/api/deudoresFiltrados', (req, res) => {
           console.log(datafilter.length)
           res.json(datafilter)
         }
-        else res.json(dataServer)
-      })
-    })
+        else res.json(dataServer) })
+       .catch(err=> res.json(err) )
 })
 
 app.get('/api/deudoresOrdenPagodb', (req,res) => {
-    bdpostgres.todosOrdenes(pool, (err, data) => {
-      if(err) return res.json(err)
-        res.json(data)
-    })
+    bdpostgres.todosOrdenes(pool)
+      .then(data=> res.json(data))
+      .catch(err=> res.json(err)) 
 })
 
 app.get('/api/deudoresOrdenVencidos', (req,res) => {
-    bdpostgres.todosOrdenesVencidos(pool, (err, data) => {
-      if(err) return res.json(err)
-        res.json(data)
-    })
+    bdpostgres.todosOrdenesVencidos(pool)
+      .then(data=> res.json(data))
+      .catch(err=> res.json(err)) 
 })
 
 app.get('/api/deudoresAutoPagoHabil', (req,res) => {
-    bdpostgres.todosAutoPagoHabil(pool, (err, data) => {
-      if(err) return res.json(err)
-        res.json(data)
-    })
+    bdpostgres.todosAutoPagoHabil(pool)
+      .then(data=> res.json(data))
+      .catch(err=> res.json(err))  
 })
 
 app.get('/api/deudas/:id', (req, res) => {
     let id = req.params.id
-    bdserver.deudasTitular(id, request, (err, data) => {
-      if(err) return res.json(err)
-      res.json(data) })  
+    bdserver.deudasTitular(id, request)
+      .then(data=> res.json(data))
+      .catch(err=> res.json(err))  
 })
 
 app.get('/api/ordenarPago/:id', (req, res) =>{
-    let id = req.params.id
-    bdserver.ordenarPago(id, request, (err, dataSqlServer) => {
-      if(err) return res.json(err)
-      bdpostgres.ingresarOrden(dataSqlServer, pool, (err, data)=>{
-        if(err) return res.json(err)
-          bdpostgres.igresarOrdenDetalle(dataSqlServer, pool, (err, data)=>{
-            if(err) return res.json(err)
-            res.json(data)
-          })
-      })
-    }) 
+    let id = req.params.id,dataSqlServer
+    bdserver.ordenarPago(id, request) 
+      .then(dataSqlServe=>  { bdpostgres.ingresarOrden(dataSqlServer, pool)
+        dataSqlServer=dataSqlServeda })
+      .then(data=> bdpostgres.igresarOrdenDetalle(dataSqlServer, pool) )
+      .then (data=> res.json(data))
+      .catch(err=> res.json(err))          
 })
 
 app.get('/api/repetirOrdenarPago/:id', (req, res) =>{
     let id = req.params.id
-    bdserver.ordenarPago(id, request, (err, dataSqlServer) => {
-      if(err) return res.json(err)
-        bdpostgres.igresarOrdenDetalle(dataSqlServer, pool, (err, data)=>{
-          if(err) return res.json(err)
-          res.json(data)
-        })
-    }) 
+    bdserver.ordenarPago(id, request)
+      .then(dataSqlServer=> bdpostgres.igresarOrdenDetalle(dataSqlServer, pool) )
+      .then(data => res.json(data))
+      .catch(err =>res.json(err.message))      
 })
 //reporteGeneral?idcatastral=130950010110001000&shortid=Hynrwk5rg
 app.get('/api/reporteGeneral', (req, res) =>{
     let objectReporte = {'Carteras':[],'Titulares': [] }
     let data={ template: { "shortid": req.query.shortid }, data: {}, option: { preview: true } }
-    bdserver.deudasTitular(req.query.idcatastral, request, (err, dataDeudas) => {
-        if(err) return res.json(err)
-        bdserver.datosTitular(req.query.idcatastral, request, (err, dataTitular) => {
-        if(err) return res.json(err)
+    bdserver.deudasTitular(req.query.idcatastral, request)
+      .then(dataDeudas=> {
         objectReporte.Carteras = dataDeudas
+        return bdserver.datosTitular(req.query.idcatastral, request) })
+      .then(dataTitular=> {
         objectReporte.Titulares.push(dataTitular[0])
         data.data = objectReporte
         let options = { uri:"http://localhost:5488/api/report", method:'POST', json:data }
-        requestReport(options).pipe(res)
-      })     
-    })
+        requestReport(options).pipe(res) })
+      .catch(err => console.log(err.message))       
 })
 
 app.post('/api/reporteVarios', (req, res)=> {
@@ -163,7 +152,7 @@ app.post('/api/reporteVarios', (req, res)=> {
             data.data = titulares
             let options = { uri:"http://localhost:5488/api/report", method:'POST', json:data }
             requestReport(options).pipe(res) })
-    .catch(err => console.log(err.message) )  
+    .catch(err => console.log(err.message))  
 })
 
 app.post('/api/users', function(req, res) {
