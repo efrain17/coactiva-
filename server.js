@@ -7,6 +7,8 @@ const pg = require('pg')
 const bdpostgres = require('./lib/bdPostgres')
 const bdserver = require('./lib/bdsqlServer')
 const requestReport = require('request')
+const reportLib = require('./lib/reportes')
+const bodyParser = require('body-parser');
 
 ////////////////////////////////////////
 const app = express()
@@ -48,6 +50,8 @@ app.all('/ag/*',  (req, res) => { //enrutador de angular
   res.status(200).sendFile(
     path.join(__dirname, '/dist/index.html')); 
 });
+app.use(bodyParser.json()); 
+app.use(bodyParser.urlencoded({ extended: true })); 
 
 //mis servicios 
 app.get('/api/deudores/:id', (req, res) => {
@@ -135,22 +139,39 @@ app.get('/api/repetirOrdenarPago/:id', (req, res) =>{
 })
 //reporteGeneral?idcatastral=130950010110001000&shortid=Hynrwk5rg
 app.get('/api/reporteGeneral', (req, res) =>{
-    var myobject = {'Carteras':[],'Titulares': [] }
-    var data={ template: { "shortid": req.query.shortid }, data: {}, option: { preview: true } }
-
+    let objectReporte = {'Carteras':[],'Titulares': [] }
+    let data={ template: { "shortid": req.query.shortid }, data: {}, option: { preview: true } }
     bdserver.deudasTitular(req.query.idcatastral, request, (err, dataDeudas) => {
         if(err) return res.json(err)
         bdserver.datosTitular(req.query.idcatastral, request, (err, dataTitular) => {
         if(err) return res.json(err)
-        myobject.Carteras = dataDeudas
-        myobject.Titulares.push(dataTitular[0])
-        data.data = myobject
-        console.log(data)
-        var options = { uri:"http://localhost:5488/api/report", method:'POST', json:data }
+        objectReporte.Carteras = dataDeudas
+        objectReporte.Titulares.push(dataTitular[0])
+        data.data = objectReporte
+        let options = { uri:"http://localhost:5488/api/report", method:'POST', json:data }
         requestReport(options).pipe(res)
       })     
     })
 })
+
+app.post('/api/reporteVarios', (req, res)=> {
+    let idcatastrales = req.body;
+    console.log("TITULARES ENVIADOS")
+    reportLib.reportearVarios(idcatastrales, request)
+    .then ( titulares => {
+            let data={ template: { "shortid": "HkSpPiRSe" }, data: {}, option: { preview: true } }
+            data.data = titulares
+            let options = { uri:"http://localhost:5488/api/report", method:'POST', json:data }
+            requestReport(options).pipe(res) })
+    .catch(err => console.log(err.message) )  
+})
+
+app.post('/api/users', function(req, res) {
+    var user_id = req.body.id;
+    var token = req.body.token;
+    var geo = req.body.geo;
+    res.send(user_id[0] + ' ' + token + ' ' + geo);
+});
 
 
 server.listen(port, () => console.log(`Listening on port ${port}`))
