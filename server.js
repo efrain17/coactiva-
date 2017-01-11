@@ -157,6 +157,9 @@ app.post('/api/reporteVarios', (req, res)=> {
 
 app.post('/api/ordenarPagoVarios', (req, res) =>{
     let idcatastrales = req.body;
+    reportLib.ordenarVarios(idcatastrales, request, pool)
+       .then(data => res.json(data))
+       .catch(err =>res.json(err.message))
              
 })
 
