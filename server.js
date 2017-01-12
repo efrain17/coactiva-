@@ -14,7 +14,7 @@ const bodyParser = require('body-parser');
 const app = express()
 const server = http.createServer(app)
 ///////////////////////////////////////
-
+var urlReport = "http://localhost:5488/api/report"
 var connectionSql = new sql.Connection({
     user: 'efrain',
     password: '123456',
@@ -75,7 +75,8 @@ app.get('/api/deudoresFiltrados', (req, res) => {
       .then(dataPostgres=> {
         if(dataPostgres.length > 0){ 
           let datafilter = dataServer.filter(dataMap => {
-            let dataReturn = dataPostgres.find(data =>  data.codigocatastral ==dataMap.codigocatastral && data.anomax==dataMap.anomax)
+            let dataReturn = dataPostgres.find(data =>
+              data.codigocatastral ==dataMap.codigocatastral && data.anomax==dataMap.anomax)
             if (!dataReturn) return dataMap
           })
           console.log(datafilter.length)
@@ -127,7 +128,42 @@ app.get('/api/repetirOrdenarPago/:id', (req, res) =>{
       .then(data => res.json(data))
       .catch(err =>res.json(err.message))      
 })
-//reporteGeneral?idcatastral=130950010110001000&shortid=Hynrwk5rg
+
+app.get('/api/emitirAutoPago/:id', (req, res) =>{
+    let idcatastrales = req.params.id
+    bdserver.ordenarPago(idcatastrales, request)
+      .then(dataSqlServer=> bdpostgres.igresarOrdenDetalle(dataSqlServer, pool) )
+      .then(data => res.json(data))
+      .catch(err =>res.json(err.message))      
+})
+ //codigocatastral,cedula,nombres,num_orden,fechaemision,valor}
+
+app.get('/api/reporteAutoPago', (req, res)=> {
+     //let idcatastrales = req.body.id;
+     let idcatastrales = "130955010137027000";
+     console.log(idcatastrales)
+     //let objectReporte = {'AUtopago':[]}
+     let objectReporte = {
+    "AUtopago": [
+        {"codigocatastral":"130955010137027000" ,"cedula":"  1302430885  1302430885", "nombres":"  VERA ROCA HILDAPERFECTA  VERA ROCA HILDAPERFECTA", "num_orden":"RFX-GAP-MONT-001", "fechaemision":"2016/02/01", "valor":"5901.55"}
+    ]
+}
+     bdserver.ordenarPago(idcatastrales, request)
+      .then(titulares => {
+            titulares = titulares.map(date=> { 
+              date.num_orden="0001"
+              date.fechaemision=new Date().toJSON().slice(0,10)
+              return date
+            }) 
+            let data={ template: { "shortid": "Hk0CzIaBe" }, data: {}, option: { preview: true } }
+            //objectReporte.AUtopago.push(titulares[0]) 
+            data.data = objectReporte
+            console.log(data.data)
+            let options = { uri: urlReport, method:'POST', json:data }
+            requestReport(options).pipe(res) })
+    .catch(err => console.log(err.message))  
+})
+
 app.get('/api/reporteGeneral', (req, res) =>{
     let objectReporte = {'Carteras':[],'Titulares': [] }
     let data={ template: { "shortid": req.query.shortid }, data: {}, option: { preview: true } }
@@ -138,7 +174,7 @@ app.get('/api/reporteGeneral', (req, res) =>{
       .then(dataTitular=> {
         objectReporte.Titulares.push(dataTitular[0])
         data.data = objectReporte
-        let options = { uri:"http://localhost:5488/api/report", method:'POST', json:data }
+        let options = { uri: urlReport, method:'POST', json:data }
         requestReport(options).pipe(res) })
       .catch(err => console.log(err.message))       
 })

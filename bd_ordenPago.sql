@@ -1,6 +1,6 @@
 /*==============================================================*/
 /* DBMS name:      PostgreSQL 8                                 */
-/* Created on:     5/1/2017 13:35:14                            */
+/* Created on:     12/1/2017 12:53:07                           */
 /*==============================================================*/
 
 
@@ -18,7 +18,7 @@ create table AUTO_PAGO (
    CODIGOCATASTRAL      TEXT                 null,
    ANO                  TEXT                 null,
    ANOMAX               TEXT                 null,
-   FECHA_INGRESO        TEXT                 null,
+   FECHAINGRESO         TEXT                 null,
    constraint PK_AUTO_PAGO primary key (ID_AUTO_PAGO)
 );
 
