@@ -159,8 +159,7 @@ app.post('/api/ordenarPagoVarios', (req, res) =>{
     let idcatastrales = req.body;
     reportLib.ordenarVarios(idcatastrales, request, pool)
        .then(data => res.json(data))
-       .catch(err =>res.json(err.message))
-             
+       .catch(err =>res.json(err.message))            
 })
 
 app.post('/api/users', function(req, res) {
@@ -169,7 +168,6 @@ app.post('/api/users', function(req, res) {
     var geo = req.body.geo;
     res.send(user_id[0] + ' ' + token + ' ' + geo);
 });
-
 
 server.listen(port, () => console.log(`Listening on port ${port}`))
 
