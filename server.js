@@ -139,15 +139,10 @@ app.get('/api/emitirAutoPago/:id', (req, res) =>{
  //codigocatastral,cedula,nombres,num_orden,fechaemision,valor}
 
 app.get('/api/reporteAutoPago', (req, res)=> {
-     //let idcatastrales = req.body.id;
-     let idcatastrales = "130955010137027000";
+     let idcatastrales = req.body.id;
+     //let idcatastrales = "130955010137027000";
      console.log(idcatastrales)
-     //let objectReporte = {'AUtopago':[]}
-     let objectReporte = {
-    "AUtopago": [
-        {"codigocatastral":"130955010137027000" ,"cedula":"  1302430885  1302430885", "nombres":"  VERA ROCA HILDAPERFECTA  VERA ROCA HILDAPERFECTA", "num_orden":"RFX-GAP-MONT-001", "fechaemision":"2016/02/01", "valor":"5901.55"}
-    ]
-}
+     let objectReporte = {'AUtopago':[]}
      bdserver.ordenarPago(idcatastrales, request)
       .then(titulares => {
             titulares = titulares.map(date=> { 
@@ -156,7 +151,7 @@ app.get('/api/reporteAutoPago', (req, res)=> {
               return date
             }) 
             let data={ template: { "shortid": "Hk0CzIaBe" }, data: {}, option: { preview: true } }
-            //objectReporte.AUtopago.push(titulares[0]) 
+            objectReporte.AUtopago.push(titulares[0]) 
             data.data = objectReporte
             console.log(data.data)
             let options = { uri: urlReport, method:'POST', json:data }
